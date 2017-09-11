@@ -4,7 +4,6 @@
   },
   "dependencies": {
     "solium": "^0.5.4",
-    "truffle-wallet-provider": "^0.0.4",
-    "zeppelin-solidity": "^1.2.0"
+    "truffle-wallet-provider": "^0.0.4"
   }
 }

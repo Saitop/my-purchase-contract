@@ -2,6 +2,7 @@ pragma solidity ^0.4.11;
 
 
 contract Purchase {
+    uint public required;
     uint public value;
     address public seller;
     address public buyer;
@@ -15,9 +16,10 @@ contract Purchase {
         return state;
      }
 
-    function Purchase() payable {
+    function Purchase(uint _required) payable {
         seller = msg.sender;
         value = msg.value / 2;
+        required = _required;
         require((2 * value) == msg.value);
     }
 
@@ -67,13 +69,13 @@ contract Purchase {
         seller.transfer(this.balance);
     }
 
-    function signOnLesson() payable notTrainee {
+    function signOnLesson() payable {
         require(msg.value == 2 ether);
         traineeBalances[msg.sender] = msg.value;
         SignOnLesson(msg.sender, msg.value);
     }
 
-    function refund(address _recipient) onlyOwner {
+    function refund(address _recipient) onlySeller {
         require(isTrainee(_recipient));
         require(isFinished(_recipient));
         _recipient.transfer(traineeBalances[_recipient]);
@@ -89,10 +91,15 @@ contract Purchase {
         return traineeBalances[_addr] > 0;
     }
 
-    function confirmOnce(address _recipient) onlyOwner {
+    function confirmOnce(address _recipient) onlySeller {
         require(isTrainee(_recipient));
         traineeProgress[_recipient] = traineeProgress[_recipient] + 1;
         Confirmation(msg.sender, _recipient, traineeProgress[_recipient]);
     }
+
+    function checkProgress() onlySeller constant returns (uint256) {
+        return traineeProgress[msg.sender];
+    }
+
 
 }
