@@ -8,6 +8,9 @@ contract Purchase {
     enum State { Created, Locked, Inactive }
     State public state;
 
+    mapping(address => uint) traineeBalances;
+    mapping(address => uint) traineeProgress;
+
     function getState() constant returns (State) {
         return state;
      }
@@ -41,7 +44,9 @@ contract Purchase {
     event Aborted();
     event PurchaseConfirmed();
     event ItemReceived();
-
+    event SignOnLesson(address _from, uint _amount);
+    event Refund(address _from, address _to, uint _amount);
+    event Confirmation(address _from, address _to, uint _lesson);
 
     function abort() onlySeller inState(State.Created) {
         Aborted();
@@ -61,4 +66,33 @@ contract Purchase {
         buyer.transfer(value);
         seller.transfer(this.balance);
     }
+
+    function signOnLesson() payable notTrainee {
+        require(msg.value == 2 ether);
+        traineeBalances[msg.sender] = msg.value;
+        SignOnLesson(msg.sender, msg.value);
+    }
+
+    function refund(address _recipient) onlyOwner {
+        require(isTrainee(_recipient));
+        require(isFinished(_recipient));
+        _recipient.transfer(traineeBalances[_recipient]);
+        Refund(msg.sender, _recipient, traineeBalances[_recipient]);
+        traineeBalances[_recipient] = 0;
+    }
+
+    function isFinished(address _addr) constant returns (bool) {
+        return traineeProgress[_addr] >= required;
+    }
+
+    function isTrainee(address _addr) constant returns (bool) {
+        return traineeBalances[_addr] > 0;
+    }
+
+    function confirmOnce(address _recipient) onlyOwner {
+        require(isTrainee(_recipient));
+        traineeProgress[_recipient] = traineeProgress[_recipient] + 1;
+        Confirmation(msg.sender, _recipient, traineeProgress[_recipient]);
+    }
+
 }
